@@ -1,47 +1,193 @@
+//fiz uma versao adaptada perseguicao batman-coringa
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h> //permite uilizar strncpy 
 
-// Desafio Detective Quest
-// Tema 4 - Árvores e Tabela Hash
-// Este código inicial serve como base para o desenvolvimento das estruturas de navegação, pistas e suspeitos.
-// Use as instruções de cada região para desenvolver o sistema completo com árvore binária, árvore de busca e tabela hash.
+//declarando struct sala
+struct Sala {
+    char nome[50];
+    struct Sala* esquerda;
+    struct Sala* direita;
+};
 
-int main() {
+//fazendo programa modular conforme ensinado anteriormente
+void liberarMemoria(struct Sala* raiz);
+void limparBuffer(void);
+struct Sala* criarSala(const char* nome, struct Sala* esq, struct Sala* dir);
+struct Sala* criarMansao(void);
+void pressionarEnter(void);
+void mapearFuga(struct Sala* caminho[], int topo, struct Sala* atual);//quiz fazer com a possibilidade de retorno ao comodo anterior
 
-    // 🌱 Nível Novato: Mapa da Mansão com Árvore Binária
-    //
-    // - Crie uma struct Sala com nome, e dois ponteiros: esquerda e direita.
-    // - Use funções como criarSala(), conectarSalas() e explorarSalas().
-    // - A árvore pode ser fixa: Hall de Entrada, Biblioteca, Cozinha, Sótão etc.
-    // - O jogador deve poder explorar indo à esquerda (e) ou à direita (d).
-    // - Finalize a exploração com uma opção de saída (s).
-    // - Exiba o nome da sala a cada movimento.
-    // - Use recursão ou laços para caminhar pela árvore.
-    // - Nenhuma inserção dinâmica é necessária neste nível.
+/* --- Função principal --- */
+int main(void) {
+    printf("O Coringa te persegue, e você foge desesperadamente em busca de abrigo....\n");
+    printf("Para a sua sorte você se depara com uma mansão a qual possui uma imponente placa com uma letra \"W\" impressa.\n");
+    printf("Macacos me mordam! É a mansão Wayne.\n");
+    printf("A imensa porta está apenas encostada, você entra e acessa ao Hall,\n");
+    printf("no entanto, o Coringa é destemido e continua te perseguindo.\n");
+    printf("Procure Bruce pelos cômodos da mansão, busque salvação!\n\n");
 
-    // 🔍 Nível Aventureiro: Armazenamento de Pistas com Árvore de Busca
-    //
-    // - Crie uma struct Pista com campo texto (string).
-    // - Crie uma árvore binária de busca (BST) para inserir as pistas coletadas.
-    // - Ao visitar salas específicas, adicione pistas automaticamente com inserirBST().
-    // - Implemente uma função para exibir as pistas em ordem alfabética (emOrdem()).
-    // - Utilize alocação dinâmica e comparação de strings (strcmp) para organizar.
-    // - Não precisa remover ou balancear a árvore.
-    // - Use funções para modularizar: inserirPista(), listarPistas().
-    // - A árvore de pistas deve ser exibida quando o jogador quiser revisar evidências.
+    struct Sala* mansao = criarMansao();
+    if (mansao == NULL) {
+        printf("Erro ao criar a mansão.\n");
+        return 1;
+    }
 
-    // 🧠 Nível Mestre: Relacionamento de Pistas com Suspeitos via Hash
-    //
-    // - Crie uma struct Suspeito contendo nome e lista de pistas associadas.
-    // - Crie uma tabela hash (ex: array de ponteiros para listas encadeadas).
-    // - A chave pode ser o nome do suspeito ou derivada das pistas.
-    // - Implemente uma função inserirHash(pista, suspeito) para registrar relações.
-    // - Crie uma função para mostrar todos os suspeitos e suas respectivas pistas.
-    // - Adicione um contador para saber qual suspeito foi mais citado.
-    // - Exiba ao final o “suspeito mais provável” baseado nas pistas coletadas.
-    // - Para hashing simples, pode usar soma dos valores ASCII do nome ou primeira letra.
-    // - Em caso de colisão, use lista encadeada para tratar.
-    // - Modularize com funções como inicializarHash(), buscarSuspeito(), listarAssociacoes().
+    struct Sala* atual = mansao;
+    struct Sala* caminho[50];  // Pilha para guardar o caminho percorrido, quiz fazer com possibilidade de retorno ao comodo anterior - opcao3
+    int topo = -1;
+    int opcao;
 
+    while (1) {
+        printf("\nVocê está em: %s\n", atual->nome);
+        printf("Escolha uma opção:\n");
+        printf("1 - Acessar porta à direita\n");
+        printf("2 - Acessar porta à esquerda\n");
+        printf("3 - Voltar ao cômodo anterior\n");
+        printf("0 - Sair do jogo\n");
+        printf("Opção: ");
+
+        if (scanf("%d", &opcao) != 1) {
+            limparBuffer();
+            pressionarEnter();
+            continue;
+        }
+        limparBuffer();
+
+        switch (opcao) {
+            case 1: // Direita
+                if (atual->direita != NULL) {
+                    caminho[++topo] = atual;
+                    atual = atual->direita;
+                    printf("O Coringa se aproxima, continue fugindo!\n");
+                    pressionarEnter();
+                } else {
+                    printf("\nVocê foi alcançado, o Batmóvel quebrou e Batman não chega a tempo.\n");
+                    printf("Boa sorte com o Coringa! HAHAHAHAHAHAHAHA.\n");
+                    mapearFuga(caminho, topo, atual);
+                    liberarMemoria(mansao);
+                    return 0;
+                }
+                break;
+
+            case 2: // Esquerda
+                if (atual->esquerda != NULL) {
+                    caminho[++topo] = atual;
+                    atual = atual->esquerda;
+                    printf("O Coringa se aproxima, continue fugindo!\n");
+                    pressionarEnter();
+                } else {
+                    printf("\nVocê foi alcançado, o Batmóvel quebrou e Batman não chega a tempo.\n");
+                    printf("Boa sorte com o Coringa! HAHAHAHAHAHAHAHA.\n");
+                    mapearFuga(caminho, topo, atual);
+                    liberarMemoria(mansao);
+                    return 0;
+                }
+                break;
+
+            case 3: // Voltar
+                if (topo >= 0) {
+                    atual = caminho[topo--];
+                    printf("Você retorna ao cômodo anterior.\n");
+                } else {
+                    printf("Você já está no Hall, se sair o Coringa te pega!\n");
+                }
+                pressionarEnter();
+                break;
+
+            case 0: // Sair
+                printf("Quanto medo do Coringa.....\n");
+                liberarMemoria(mansao);
+                return 0;
+
+            default:
+                printf("Opção inválida. Tente novamente.\n");
+                pressionarEnter();
+                break;
+        }
+
+        // Verifica se o jogador chegou a uma folha
+        if (atual->esquerda == NULL && atual->direita == NULL) {
+            printf("\nVocê foi alcançado, o Batmóvel quebrou e Batman não chega a tempo.\n");
+            printf("Boa sorte com o Coringa! HAHAHAHAHAHAHAHA.\n");
+            mapearFuga(caminho, topo, atual);
+            liberarMemoria(mansao);
+            return 0;
+        }
+    }
+
+    liberarMemoria(mansao);
     return 0;
+}
+
+/* --- Implementações auxiliares --- */
+//estrutura que chamarao as salas para compor mansao
+
+struct Sala* criarSala(const char* nome, struct Sala* esq, struct Sala* dir) {
+    struct Sala* nova = (struct Sala*) malloc(sizeof(struct Sala));
+    if (nova == NULL) {
+        fprintf(stderr, "Erro: falha na alocação de memória para nova sala.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    strncpy(nova->nome, nome, sizeof(nova->nome) - 1);
+    nova->nome[sizeof(nova->nome) - 1] = '\0';
+    nova->esquerda = esq;
+    nova->direita = dir;
+    return nova;
+}
+//mansao já vem pre definida
+/* Estrutura completa da Mansão Wayne */
+struct Sala* criarMansao(void) {
+    struct Sala* banheiro1 = criarSala("Banheiro", NULL, NULL);
+    struct Sala* sacada = criarSala("Sacada", NULL, NULL);
+    struct Sala* dispensa = criarSala("Dispensa", NULL, NULL);
+    struct Sala* banheiro2 = criarSala("Banheiro", NULL, NULL);
+    struct Sala* salaMusica = criarSala("Sala de Musica", NULL, NULL);
+    struct Sala* quarto2 = criarSala("Quarto2", NULL, NULL);
+    struct Sala* jardim = criarSala("Jardim", NULL, NULL);
+    struct Sala* parque = criarSala("Parque", NULL, NULL);
+
+    struct Sala* quarto1 = criarSala("Quarto1", banheiro1, sacada);//nivel 3 da arvore mansao
+    struct Sala* salaLareira = criarSala("Sala Lareira", dispensa, banheiro2);
+    struct Sala* varanda = criarSala("Varanda", jardim, parque);
+    struct Sala* cozinha = criarSala("Cozinha", varanda, salaMusica);
+
+    struct Sala* biblioteca = criarSala("Biblioteca", quarto1, salaLareira);//nivel 2 da arvore mansao
+    struct Sala* salaEstar = criarSala("Sala de Estar", cozinha, quarto2);
+
+    struct Sala* hall = criarSala("Hall", biblioteca, salaEstar);//nivel 1 da arvore mansao
+    return hall;//nivel 0 da arvore mansao
+}
+
+/* Libera memória da árvore (pós-ordem) */
+//funcao recursiva para liberacao de memoria
+
+void liberarMemoria(struct Sala* raiz) {
+    if (raiz == NULL) return;
+    liberarMemoria(raiz->esquerda);
+    liberarMemoria(raiz->direita);
+    free(raiz);
+}
+
+/* Limpa buffer do teclado */
+void limparBuffer(void) {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF) { }
+}
+
+/* Espera o jogador pressionar Enter */
+void pressionarEnter(void) {
+    printf("Pressione Enter para continuar.....");
+    getchar();
+}
+
+/* --- mostra o caminho percorrido durante a fuga --- */
+void mapearFuga(struct Sala* caminho[], int topo, struct Sala* atual) {
+    printf("Você fugiu acessando - ");
+    for (int i = 0; i <= topo; i++) {
+        printf("%s, ", caminho[i]->nome);
+    }
+    printf("e foi capturado no %s!\n", atual->nome);
 }
 
